@@ -20,7 +20,7 @@ function get_position(s::SerialPort)
         return_str = LibSerialPort.readuntil(s, '\n')
         return_str = replace(return_str, '\0'=>"") # remove null characters
 
-        return parse.(Int, split(lstrip(rstrip(return_str)[3:end])))
+        return parse.(Int, split(strip(return_str)[3:end]))
     else
         error(sp_return)
     end
@@ -32,6 +32,17 @@ Move (relative) the stage position
 """
 function move_relative(s::SerialPort, dx::Int, dy::Int)
     sp_return = write(s, "MOVEI X=$dx Y=$dy\r")
+    write_check_error(s, sp_return)
+
+    nothing
+end
+
+"""
+    move_absolute(s::SerialPort, x::Int, y::Int)
+Move (absolute) the stage position
+"""
+function move_absolute(s::SerialPort, x::Int, y::Int)
+    sp_return = write(s, "MOVE X=$x Y=$y\r")
     write_check_error(s, sp_return)
 
     nothing

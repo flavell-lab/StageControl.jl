@@ -9,6 +9,7 @@ include("common.jl")
 export set_zero,
     get_position,
     move_relative,
+    move_absolute,
     # velocity.jl
     set_velocity_x,
     set_velocity_y,

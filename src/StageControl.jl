@@ -14,5 +14,6 @@ export set_zero,
     set_velocity_x,
     set_velocity_y,
     # common.jl
-    flush_buffer
+    flush_buffer,
+    find_stage_port    
 end # module

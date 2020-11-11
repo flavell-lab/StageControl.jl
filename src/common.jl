@@ -1,18 +1,44 @@
+function check_sp_return(sp_return)
+    if sp_return != SP_OK
+        error("Serial port error: $sp_return")
+    end
+
+    nothing
+end
+
+function check_bytes_read(read_bytes)
+    if read_bytes == 0
+        error("0 bytes to read")
+    end
+
+    nothing
+end
+
 function flush_buffer(s::SerialPort)
-    sp_flush(s.ref, SP_BUF_BOTH) == SP_OK
+    sp_return = sp_flush(s.ref, SP_BUF_BOTH)
+    if sp_return != SP_OK
+        error("SP Error: $sp_return")
+    end
+    
+    read_bytes = bytesavailable(s)
+    if read_bytes != 0
+        error("Buffer not cleard")
+    end
+    nothing
 end
 
 function write_check_error(s::SerialPort, sp_return)
-    if sp_return == SP_OK
-        return_str = LibSerialPort.readuntil(s, '\n')
-        return_str = replace(return_str, '\0'=>"")
-        return_str = strip(chomp(return_str))
+    check_sp_return(sp_return)
 
-        if return_str != ":A"
-            error("Command returend error: $return_str")
-        end
-    else
-        error("SP Error: $sp_return")
+    read_bytes = bytesavailable(s)
+    if read_bytes == 0
+        error("0 bytes to read")
+    end
+
+    return_str = String(read(s, read_bytes))
+    return_str = strip(chomp(return_str))
+    if return_str != ":A"
+        error("Command returend error: $return_str")
     end
 
     nothing
@@ -43,4 +69,24 @@ function find_stage_port(;nports_guess::Integer=64)
         list_desc))
 
     list_port[idx_port]
+end
+
+function check_baud_rate(s::SerialPort, baud_rate=115200)
+    sp_return = write(s, "CAN 32 84 60 0\r")
+    check_sp_return(sp_return)
+
+    sleep(0.001)
+    read_bytes = bytesavailable(s)
+    return_str = String(read(s, read_bytes))
+    if !startswith(return_str, ":A")
+        error("The command returned error")
+    end
+
+    current_baud_rate = parse(Int, split(":A  CAN 32 212 60 115200\n")[end])
+
+    if current_baud_rate != baud_rate
+        error("Baud rate is $current_baud_rate, not $baud_rate")
+    end
+
+    nothing
 end

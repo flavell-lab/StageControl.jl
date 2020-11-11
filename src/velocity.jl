@@ -14,7 +14,7 @@ function set_velocity_x(s::SerialPort, speed_x::Int)
     cmd[12] = (speed_x & 0xff000000) >> 24
     cmd[13] = 0x0D # end
 
-    write(s, cmd) == SP_OK
+    check_sp_return(write(s, cmd))
 end
 
 function set_velocity_y(s::SerialPort, speed_x::Int)
@@ -33,5 +33,23 @@ function set_velocity_y(s::SerialPort, speed_x::Int)
     cmd[12] = (speed_x & 0xff000000) >> 24
     cmd[13] = 0x0D # end
 
-    write(s, cmd) == SP_OK
+    check_sp_return(write(s, cmd))
+end
+
+function halt_stage(s::SerialPort)
+    cmd = zeros(UInt8, 9)
+    cmd[1] = 0x23 # CAN comamnd marker
+    cmd[2] = 0x01 # stage 1
+    cmd[3] = 0x42 # command 66
+    cmd[4] = 0x00
+    cmd[5] = 0x01 # index 1 for the command
+    cmd[6] = 0x00
+    cmd[9] = 0x0D # end
+    sp_return_1 = write(s, cmd)
+    cmd[2] = 0x02 # stage 2
+    sp_return_2 = write(s, cmd)
+
+    check_sp_return.([sp_return_1, sp_return_2])
+
+    nothing
 end

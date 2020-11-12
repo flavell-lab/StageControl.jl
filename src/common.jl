@@ -45,7 +45,7 @@ function write_check_error(s::SerialPort, sp_return)
 end
 
 function get_port_list_info(;nports_guess::Integer=64)
-    ports = StageControl.sp_list_ports()
+    ports = LibSerialPort.sp_list_ports()
     list_port = String[]
     list_desc = String[]
 #     list_transport = String[]

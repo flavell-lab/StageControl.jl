@@ -53,8 +53,8 @@ function get_port_list_info(;nports_guess::Integer=64)
     for port in unsafe_wrap(Array, ports, nports_guess, own=false)
         port == C_NULL && return list_port, list_desc
 
-        push!(list_port, sp_get_port_name(port))
-        push!(list_desc, sp_get_port_description(port))
+        push!(list_port, LibSerialPort.sp_get_port_name(port))
+        push!(list_desc, LibSerialPort.sp_get_port_description(port))
 #         push!(list_transport, sp_get_port_transport(port))
     end
 

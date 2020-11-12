@@ -1,6 +1,7 @@
 module StageControl
 
 using LibSerialPort
+import LibSerialPort: SP_OK, SP_BUF_BOTH
 
 include("position.jl")
 include("velocity.jl")

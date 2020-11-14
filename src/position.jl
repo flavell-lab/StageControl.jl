@@ -2,12 +2,58 @@
     set_zero(s::SerialPort)
 Sets the current x, y position to 0, 0
 """
-function set_zero(s::SerialPort)
-    sp_return = write(s, "HERE X=0 Y=0\r")
-    sleep(0.005)
-    write_check_error(s, sp_return)
+function set_zero(s::SerialPort, stage_num::UInt8)
+    cmd = zeros(UInt8, 13)
+    cmd[1] = 0x23 # CAN comamnd marker
+    cmd[2] = stage_num # stage #
+    cmd[3] = 0x53 # command 83
+    cmd[4] = 0x00
+    cmd[5] = 0x05 # index 5 for the command
+    cmd[6] = 0x00
+    cmd[7] = 0x04 # number of bytes for data (8-11)
+    cmd[8] = 0x00 
+    cmd[9] = 0x00
+    cmd[10] = 0x00
+    cmd[11] = 0x00
+    cmd[12] = 0x00
+    cmd[13] = 0x0D # end
 
-    nothing
+    check_bytes_written(write(s, cmd), 13)
+end
+
+function set_zero(s::SerialPort)
+    cmd = zeros(UInt8, 26)
+    # stage x
+    cmd[1] = 0x23 # CAN comamnd marker
+    cmd[2] = 0x01 # stage #
+    cmd[3] = 0x53 # command 83
+    cmd[4] = 0x00
+    cmd[5] = 0x05 # index 5 for the command
+    cmd[6] = 0x00
+    cmd[7] = 0x04 # number of bytes for data (8-11)
+    cmd[8] = 0x00 
+    cmd[9] = 0x00
+    cmd[10] = 0x00
+    cmd[11] = 0x00
+    cmd[12] = 0x00
+    cmd[13] = 0x0D # end
+
+    # stage y
+    cmd[1+13] = 0x23 # CAN comamnd marker
+    cmd[2+13] = 0x02 # stage #
+    cmd[3+13] = 0x53 # command 83
+    cmd[4+13] = 0x00
+    cmd[5+13] = 0x05 # index 5 for the command
+    cmd[6+13] = 0x00
+    cmd[7+13] = 0x04 # number of bytes for data (8-11)
+    cmd[8+13] = 0x00 
+    cmd[9+13] = 0x00
+    cmd[10+13] = 0x00
+    cmd[11+13] = 0x00
+    cmd[12+13] = 0x00
+    cmd[13+13] = 0x0D # end
+    
+    check_bytes_written(write(s, cmd), 26)
 end
 
 """
@@ -31,8 +77,7 @@ function move_relative(s::SerialPort, stage_num::UInt8, d::Int32)
     cmd[12] = (d & 0xff000000) >> 24
     cmd[13] = 0x0D # end
 
-    sp_return = write(s, cmd)
-    write_check_error(s, sp_return)
+    check_bytes_written(write(s, cmd), 13)
 end
 
 """
@@ -72,45 +117,7 @@ function move_relative(s::SerialPort, dx::Int32, dy::Int32)
     cmd[12+13] = (dy & 0xff000000) >> 24
     cmd[13+13] = 0x0D # end
 
-    sp_return = write(s, cmd)
-    check_sp_return(sp_return)
-
-    nothing
-end
-
-"""
-    move_absolute(s::SerialPort, x::Int, y::Int)
-Move (absolute) the stage position
-"""
-function move_absolute(s::SerialPort, x::Int, y::Int)
-    sp_return = write(s, "MOVE X=$x Y=$y\r")
-    check_sp_return(sp_return)
-
-    nothing
-end
-
-"""
-    get_position(s::SerialPort)
-Returns the current x, y position in Int64
-"""
-function get_position(s::SerialPort)
-    sp_return = write(s, "WHERE X Y\r")
-    if sp_return != SP_OK
-        error("Serial port error: $sp_return")
-    end
-
-    sleep(0.017) # wait until available
-    read_bytes = bytesavailable(s)
-    if read_bytes == 0
-        error("0 bytes to read")
-    end
-
-    return_str = String(read(s, read_bytes))
-    if !startswith(return_str, ":A")
-        error("WHERE X Y command returned error")
-    end
-
-    return parse.(Int, split(strip(return_str[3:end-1])))
+    check_bytes_written(write(s, cmd), 26)
 end
 
 """
@@ -130,10 +137,7 @@ function query_position(s::SerialPort, stage_num::UInt8)
     cmd[8] = 0x00
     cmd[9] = 0x0D # end
 
-    sp_return = write(s, cmd)
-    check_sp_return(sp_return)
-
-    nothing
+    check_bytes_written(write(s, cmd), 9)
 end
 
 """
@@ -162,10 +166,7 @@ function query_position(s::SerialPort)
     cmd[9+8] = 0x00
     cmd[9+9] = 0x0D # end
 
-    sp_return = write(s, cmd)
-    check_sp_return(sp_return)
-
-    nothing
+    check_bytes_written(write(s, cmd), 18)
 end
 
 function read_position(s::SerialPort, stage_num::UInt8)
@@ -207,3 +208,38 @@ function read_position(s::SerialPort)
 
     int_pos_x, int_pos_y
 end
+
+# """
+#     move_absolute(s::SerialPort, x::Int, y::Int)
+# Move (absolute) the stage position
+# """
+# function move_absolute(s::SerialPort, x::Int, y::Int)
+#     sp_return = write(s, "MOVE X=$x Y=$y\r")
+#     check_sp_return(sp_return)
+
+#     nothing
+# end
+
+# """
+#     get_position(s::SerialPort)
+# Returns the current x, y position in Int64
+# """
+# function get_position(s::SerialPort)
+#     sp_return = write(s, "WHERE X Y\r")
+#     if sp_return != SP_OK
+#         error("Serial port error: $sp_return")
+#     end
+
+#     sleep(0.017) # wait until available
+#     read_bytes = bytesavailable(s)
+#     if read_bytes == 0
+#         error("0 bytes to read")
+#     end
+
+#     return_str = String(read(s, read_bytes))
+#     if !startswith(return_str, ":A")
+#         error("WHERE X Y command returned error")
+#     end
+
+#     return parse.(Int, split(strip(return_str[3:end-1])))
+# end

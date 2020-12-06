@@ -174,7 +174,7 @@ function read_position(s::SerialPort, stage_num::UInt8)
     read_data = read(s, read_bytes)
 
     @assert read_data[1] == 0x23
-    @assert read_data[2] == 0x01
+    @assert read_data[2] == stage_num
     @assert read_data[3] == 128+84
 
     int_pos = Int32(read_data[12]) << 24

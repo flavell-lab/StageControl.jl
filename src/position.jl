@@ -60,11 +60,11 @@ end
     move_relative(s::SerialPort, stage_num::UInt8, d::Int32)
 Moves a stage by stage unit (10000 / 1 mm)
 """
-function move_relative(s::SerialPort, stage_num::UInt8, d::Int32)
+function c(s::SerialPort, stage_num::UInt8, d::Int32)
 
     cmd = zeros(UInt8, 13)
     cmd[1] = 0x23 # CAN comamnd marker
-    cmd[2] = 0x01 # stage 1
+    cmd[2] = stage_num # stage
     cmd[3] = 0x41 # command 65
     cmd[4] = 0x00
     cmd[5] = 0x09 # index 9 for the command
